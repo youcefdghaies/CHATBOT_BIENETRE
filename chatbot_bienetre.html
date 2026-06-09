@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chatbot Bien-être 🌿</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #e8f0e4;
+    --header: #4a9b8f;
+    --header-dark: #3a7d73;
+    --bot-bubble: #c8dfc4;
+    --bot-text: #2d4a3e;
+    --input-bg: #f5faf4;
+    --accent: #6ab8a8;
+    --joy: #f4a261;
+    --sad: #5b8fb9;
+    --stress: #8b6bb1;
+    --motivation: #e76f51;
+    --fear: #7bafc8;
+    --anger: #c1440e;
+    --neutral: #6a8f7a;
+    --loneliness: #9b8ec4;
+    --urgence: #e07b6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 15% 15%, rgba(106,184,168,0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 85%, rgba(200,223,196,0.28) 0%, transparent 55%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .chat-container {
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.13), 0 4px 16px rgba(0,0,0,0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 700px;
+  }
+
+  .chat-header {
+    background: linear-gradient(135deg, #4a9b8f 0%, #3a8578 100%);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .chat-header::before {
+    content:''; position:absolute; top:-28px; right:-28px;
+    width:90px; height:90px; background:rgba(255,255,255,0.09); border-radius:50%;
+  }
+  .chat-header::after {
+    content:''; position:absolute; bottom:-18px; left:60px;
+    width:55px; height:55px; background:rgba(255,255,255,0.06); border-radius:50%;
+  }
+
+  .avatar {
+    width:44px; height:44px; background:rgba(255,255,255,0.18);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:21px; flex-shrink:0; border:2px solid rgba(255,255,255,0.28);
+  }
+  .header-info h1 {
+    font-family:'Lora',serif; font-size:16px; color:white;
+    font-weight:600; letter-spacing:0.2px;
+  }
+  .header-info p { font-size:11.5px; color:rgba(255,255,255,0.72); font-weight:300; margin-top:2px; }
+  .status-dot {
+    width:7px; height:7px; background:#7ef5a0; border-radius:50%;
+    margin-right:5px; display:inline-block; animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)}
+  }
+
+  .messages {
+    flex:1; overflow-y:auto; padding:18px 14px;
+    display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth;
+  }
+  .messages::-webkit-scrollbar { width:4px; }
+  .messages::-webkit-scrollbar-thumb { background:#c8dfc4; border-radius:4px; }
+
+  .message { display:flex; flex-direction:column; animation:slideIn .3s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .message.bot { align-items:flex-start; }
+  .message.user { align-items:flex-end; }
+
+  .bubble {
+    max-width:83%; padding:11px 15px; border-radius:18px;
+    font-size:13.5px; line-height:1.58;
+    word-wrap: break-word;
+  }
+  .bot .bubble { background:var(--bot-bubble); color:var(--bot-text); border-bottom-left-radius:5px; }
+  .user .bubble { background:var(--header); color:white; border-bottom-right-radius:5px; }
+
+  .emotion-label {
+    font-size:10.5px; font-weight:700; letter-spacing:1.1px; text-transform:uppercase;
+    margin-bottom:5px; padding:3px 11px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:5px; color:white;
+  }
+  .emotion-JOIE       { background:var(--joy); }
+  .emotion-TRISTESSE  { background:var(--sad); }
+  .emotion-STRESS     { background:var(--stress); }
+  .emotion-MOTIVATION { background:var(--motivation); }
+  .emotion-PEUR       { background:var(--fear); }
+  .emotion-COLERE     { background:var(--anger); }
+  .emotion-SOLITUDE   { background:var(--loneliness); }
+  .emotion-URGENCE    { background:var(--urgence); }
+  .emotion-NEUTRE     { background:var(--neutral); }
+
+  .timestamp { font-size:10px; color:#b0b8b0; margin-top:3px; padding:0 3px; }
+
+  .typing-indicator {
+    display:flex; align-items:center; gap:5px;
+    padding:12px 16px; background:var(--bot-bubble);
+    border-radius:18px; border-bottom-left-radius:5px; width:fit-content;
+  }
+  .typing-indicator span {
+    width:7px; height:7px; background:var(--header);
+    border-radius:50%; animation:bounce 1.2s infinite;
+  }
+  .typing-indicator span:nth-child(2){animation-delay:.2s}
+  .typing-indicator span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce {
+    0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-7px);opacity:1}
+  }
+
+  .crisis-banner {
+    background:linear-gradient(135deg,#e07b6a,#c1440e);
+    color:white; padding:13px 16px; border-radius:14px;
+    font-size:13px; line-height:1.6; max-width:90%;
+    margin-bottom: 10px;
+  }
+  .crisis-banner strong { font-size:13.5px; display:block; margin-bottom:6px; }
+  .crisis-phone {
+    display:inline-block; background:rgba(255,255,255,0.22);
+    padding:1px 8px; border-radius:10px; font-weight:700; margin:0 2px;
+  }
+
+  .support-box {
+    background: rgba(106,184,168,0.1); border-left: 4px solid var(--accent);
+    padding:10px 12px; border-radius:8px; font-size:12px; 
+    line-height:1.5; margin-top:8px; color: var(--bot-text);
+  }
+  .support-box strong { display: block; margin-bottom: 4px; color: var(--header); }
+
+  .quick-replies {
+    display:flex; flex-wrap:wrap; gap:6px; padding:4px 14px 10px;
+  }
+  .quick-reply {
+    background:white; border:1.5px solid var(--accent);
+    color:var(--header-dark); padding:5px 12px; border-radius:20px;
+    font-size:12px; font-family:'DM Sans',sans-serif;
+    cursor:pointer; transition:all .2s; font-weight:500;
+  }
+  .quick-reply:hover { background:var(--bot-bubble); transform:translateY(-1px); }
+
+  .input-area {
+    padding:12px 14px; border-top:1px solid rgba(0,0,0,0.06);
+    background:var(--input-bg); display:flex; gap:9px; align-items:flex-end;
+  }
+  #userInput {
+    flex:1; border:1.5px solid #d0e8d0; border-radius:22px;
+    padding:10px 16px; font-family:'DM Sans',sans-serif;
+    font-size:13.5px; color:var(--bot-text); background:white;
+    outline:none; resize:none; min-height:42px; max-height:100px;
+    line-height:1.4; transition:border-color .2s;
+  }
+  #userInput:focus { border-color:var(--header); }
+  #userInput::placeholder { color:#b8ceb8; }
+  #userInput:disabled { opacity:0.5; }
+
+  .btn {
+    width:40px; height:40px; border-radius:50%; border:none;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:16px; transition:all .2s; flex-shrink:0;
+  }
+  #sendBtn { background:var(--header); color:white; box-shadow:0 2px 8px rgba(74,155,143,.35); }
+  #sendBtn:hover { background:var(--header-dark); transform:scale(1.06); }
+  #sendBtn:active { transform:scale(.94); }
+  #sendBtn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  #clearBtn { background:#f0f0f0; color:#888; font-size:14px; }
+  #clearBtn:hover { background:#e0e0e0; }
+
+  .powered {
+    text-align:center; font-size:10px; color:#b0b8b0;
+    padding:5px 0 7px; background:var(--input-bg); letter-spacing:.3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="avatar">🌿</div>
+    <div class="header-info">
+      <h1>Chatbot Bien-être 🌿</h1>
+      <p><span class="status-dot"></span>En ligne · Écoute & Soutien émotionnel</p>
+    </div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="quick-replies" id="quickReplies">
+    <button class="quick-reply" onclick="sendQuick('je suis stressé')">😰 Stressé(e)</button>
+    <button class="quick-reply" onclick="sendQuick('je suis triste')">😢 Triste</button>
+    <button class="quick-reply" onclick="sendQuick('je suis heureux')">😊 Heureux/se</button>
+    <button class="quick-reply" onclick="sendQuick('je me sens seul')">🌧 Seul(e)</button>
+    <button class="quick-reply" onclick="sendQuick('j\'ai peur')">😨 Anxieux/se</button>
+    <button class="quick-reply" onclick="sendQuick('je suis en colère')">😤 En colère</button>
+  </div>
+
+  <div class="input-area">
+    <textarea id="userInput" placeholder="Écris ton message ici…" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+      oninput="autoResize(this)"></textarea>
+    <button class="btn" id="clearBtn" onclick="clearChat()" title="Nouvelle conversation">🗑</button>
+    <button class="btn" id="sendBtn" onclick="sendMessage()" title="Envoyer">➤</button>
+  </div>
+  <div class="powered">Soutien complémentaire uniquement · Ne remplace pas un professionnel de santé mentale</div>
+</div>
+
+<script>
+let conversationHistory = [];
+let isSending = false;
+let lastEmotion = 'NEUTRE';
+let messageCount = 0;
+
+/* base de connaissances */
+const KB = {
+  URGENCE: {
+    keywords: ['finir ma vie','en finir','me suicid','me tuer','mourir','plus envie de vivre','me blesser','me faire du mal','veux mourir','veut mourir','veux en finir','auto-sabotage','blesser quelqu\'un'],
+    responses: [
+      {
+        main: "Ta vie est précieuse et tu n'as pas à traverser ce moment seul(e). Je suis sérieusement concerné(e) pour toi. 💙\n\nAide immédiate — Appelle MAINTENANT :",
+        support: "🇹🇳 TUNISIE\nSAMU: 190\nPolice: 197\nUrgences: 1515"
+      }
+    ]
+  },
+  TRISTESSE: {
+    keywords: ['triste','tristesse','pleure','pleuré','déprimé','déprime','mélancolie','chagrin','peine','cafard','malheureux','pleurer','pas bien','mal','vide','vidé','pleurnicheur','malade','souffre','souffrir','brisé','coeur brisé','décou'],
+    responses: [
+      {
+        main: "La tristesse que tu ressens est valide et mérite toute ton attention. C'est courageux de te sentir et d'en parler. 💙",
+        support: "Sache que tu n'es pas seul(e) dans cette douleur. Si cette tristesse persiste, parler à un professionnel peut vraiment te libérer."
+      },
+      {
+        main: "Tes larmes sont un acte de courage, pas de faiblesse. Chaque émotion difficile nous apprend quelque chose. 💙",
+        support: "Prends soin de toi doux : reste hydraté(e), cherche le calme, entoure-toi si possible. N'hésite pas à atteindre quelqu'un."
+      },
+      {
+        main: "Je vois ta douleur et elle est digne d'être entendue. La tristesse fait partie de la vie — et tu es assez fort(e) pour la traverser. 💙",
+        support: "Un professionnel de santé mentale peut vraiment faire la différence. C'est un acte d'amour envers toi-même."
+      },
+      {
+        main: "Merci de me faire confiance avec ça. La tristesse est une émotion très humaine — pas quelque chose à combattre seul(e). 💙",
+        support: "As-tu une personne de confiance à qui tu pourrais parler ? Parfois, juste être entendu(e) peut déjà aider."
+      }
+    ]
+  },
+  STRESS: {
+    keywords: ['stressé','stress','anxieux','anxiété','débordé','submergé','pression','surchargé','nerv','tendu','inquiet','inquiète','angoiss','overwhelm','pas dormir','insomnies','paniq','préoccup','tendue'],
+    responses: [
+      {
+        main: "Le stress que tu portes en ce moment est très réel, et c'est courageux de le reconnaître. 😌",
+        support: "Essaie ça : inspire lentement par le nez pendant 4 secondes, puis expire par la bouche pendant 6 secondes. Répète 5 fois. Si le stress persiste, un professionnel peut t'aider."
+      },
+      {
+        main: "Vous portez beaucoup — c'est normal de ressentir cette pression. Mais tu n'as pas à tout gérer d'un coup. 💚",
+        support: "Focus sur une seule tâche à la fois. Demander de l'aide n'est pas une faiblesse — c'est une force. Qui pourrais-tu contacter ?"
+      },
+      {
+        main: "L'anxiété peut sembler envahissante, mais rappelle-toi : tu as DÉJÀ surmonté des moments difficiles. Tu es plus résilient(e) que tu ne le crois. 💚",
+        support: "Si ça affecte ton sommeil ou ton quotidien, un professionnel de santé mentale peut vraiment t'accompagner avec des outils efficaces."
+      },
+      {
+        main: "Ton corps te dit qu'il a besoin d'une pause. Écoute-le. 💚",
+        support: "Une courte promenade, un verre d'eau, quelques minutes de silence — ces petits gestes comptent vraiment."
+      }
+    ]
+  },
+  JOIE: {
+    keywords: ['heureux','heureuse','joie','content','contente','super','génial','formidable','excellent','top','bonheur','sourire','épanoui','bien','fantastique','incroyable','ravi','ravi','amour','aime','adore'],
+    responses: [
+      {
+        main: "Entendre que tu vas bien me fait vraiment chaud au cœur ! 😊✨",
+        support: "Savoure ce moment précieux — la joie mérite d'être célébrée et chérie. Qu'est-ce qui t'apporte cette belle énergie ?"
+      },
+      {
+        main: "C'est merveilleux ! 😊 Ces moments de bonheur sont les perles de notre vie.",
+        support: "Continue à cultiver cette énergie positive. Partage ta joie avec quelqu'un — c'est contagieux ! 🌟"
+      },
+      {
+        main: "Ton énergie positive brille vraiment ! C'est inspirant. 😊🌟",
+        support: "Profite de cet élan pour avancer sur ce qui te tient à cœur — la momentum est ton allié !"
+      },
+      {
+        main: "C'est beau de te voir heureux/se ! Merci de partager ça avec moi. 😊💚",
+        support: "Garde cette lueur vivante en toi. Tu mérites tout ce bonheur et bien plus encore."
+      }
+    ]
+  },
+  PEUR: {
+    keywords: ['peur','panique','paniq','effray','terrifié','angoisse','phob','cauchemar','appréhension','craint','redoute','flippe','terrifiant','horrible','prise de panique'],
+    responses: [
+      {
+        main: "La peur que tu ressens est un signal que quelque chose compte vraiment pour toi. C'est une émotion profondément humaine. 💙",
+        support: "Respire lentement et concentre-toi sur ce que tu PEUX contrôler ici et maintenant. Ancre-toi dans le présent."
+      },
+      {
+        main: "C'est normal d'avoir peur — et tu es infiniment plus fort(e) que cette peur ne l'est. 💙",
+        support: "Si cette peur envahit ton quotidien ou paralyse tes actions, un professionnel peut t'aider à la réapprivoiser."
+      },
+      {
+        main: "Traverser la peur demande du vrai courage — et tu le montres en ce moment même. 💙",
+        support: "Tu n'es pas seul(e). Parler à quelqu'un de confiance ou un thérapeute peut vraiment allléger ce fardeau."
+      },
+      {
+        main: "Les pensées peur peuvent être overwhelming, mais ce ne sont que des pensées — pas la réalité. 💙",
+        support: "Essaie de questionner gentiment : 'Qu'est-ce que je sais VRAIMENT être vrai maintenant ?' Ça peut aider."
+      }
+    ]
+  },
+  COLERE: {
+    keywords: ['colère','énervé','énervée','furieux','furie','rage','agacé','irrité','frustré','frustration','exaspéré','fâché','hors de moi','fou','folle','rage de','degoût'],
+    responses: [
+      {
+        main: "La colère que tu ressens est une émotion légitime — elle te dit quelque chose d'important. 💨",
+        support: "Essaie cette pause : respire profondément, une courte marche, de l'eau froide sur ton visage. Puis reviens au moment."
+      },
+      {
+        main: "Il est totalement normal de ressentir de la colère. Souvent, derrière la colère se cachent de la déception, de la douleur ou de l'injustice. 💨",
+        support: "Peux-tu identifier ce qui se cache vraiment ? Ça peut t'aider à comprendre ce dont tu as VRAIMENT besoin."
+      },
+      {
+        main: "Ta colère a du message à délivrer — mais elle n'a pas besoin de te contrôler. 💨",
+        support: "Si tu sens que ça déborde régulièrement, un thérapeute peut t'aider à canaliser cette énergie puissante de façon saine."
+      },
+      {
+        main: "Merci de ne pas retenir ta colère — c'est plus sain de l'exprimer. Maintenant, prends du recul. 💨",
+        support: "Écris-le, crie-le dans un coussin, fais du sport intensif — trouve une façon saine de te libérer."
+      }
+    ]
+  },
+  MOTIVATION: {
+    keywords: ['motivé','motivation','énergie','déterminé','objectif','projet','envie de','ambition','rêve','réussir','avancer','progresser','déterminée','pouvoir','capable','force','champion'],
+    responses: [
+      {
+        main: "Cette motivation que tu portes est une vraie flamme ! C'est une force magnifique. 🔥✨",
+        support: "Canalise-la vers des petits objectifs concrets et atteignables. Chaque étape, chaque pas compte vraiment."
+      },
+      {
+        main: "Quelle belle énergie ! La motivation est le moteur du vrai changement — tu as raison de la chérir. 🔥",
+        support: "N'oublie pas de prendre soin de toi aussi. L'équilibre entre action et repos est la clé de la durabilité."
+      },
+      {
+        main: "Ton enthousiasme est inspirant et je peux vraiment le sentir ! 🔥🌟",
+        support: "Mets ton rêve par écrit — un plan d'action concret transforme cette énergie en résultats tangibles."
+      },
+      {
+        main: "C'est magnifique de te voir porté(e) par cette force. Continue ! 🔥",
+        support: "Célèbre chaque petite victoire en chemin — elles nourrissent ta motivation pour la suite."
+      }
+    ]
+  },
+  SOLITUDE: {
+    keywords: ['seul','seule','solitude','isolé','isolée','personne','abandonné','incompris','incomprise','exclu','exclue','ignoré','personne pour','pas d\'ami','aucun','vide','perte de contact'],
+    responses: [
+      {
+        main: "Se sentir seul(e) est une expérience très difficile — et tu as du courage en le partageant. 🌧💙",
+        support: "Sache que tu as de la valeur intrinsèque, et que tu mérites vraiment des connexions authentiques et chaleureuses."
+      },
+      {
+        main: "L'isolement peut être douloureux, mais ce que tu ressens est valide. Tu n'as pas à le porter seul(e). 🌧",
+        support: "Essaie de tendre la main — même un petit message à une personne peut tout changer. N'abandonne pas."
+      },
+      {
+        main: "La solitude peut être écrasante, mais tu n'es vraiment pas seul(e) en ça. Beaucoup d'autres le vivent aussi. 🌧💙",
+        support: "Un professionnel peut t'aider à renouer avec les autres et surtout à renouer avec toi-même."
+      },
+      {
+        main: "Je te vois et tu comptes vraiment. La solitude est temporaire — c'est une saison, pas une sentence. 🌧",
+        support: "Cherche des communautés, des groupes, des forums basés sur tes intérêts. Connexions se construisent naturellement."
+      }
+    ]
+  },
+  CONFIANCE: {
+    keywords: ['confiance','confidence','confiance en moi','crois en moi','je crois en toi','confiant','sûr de moi','doute','douter','trop critique','perfectionist','impostor','syndrome','nul','incapable'],
+    responses: [
+      {
+        main: "La confiance en soi est un voyage, pas une destination — et tu es sur le bon chemin en te la poser. 🌟",
+        support: "Chaque petit succès compte. Reconnais tes forces — qu'elles soient grandes ou petites. Tu les mérites."
+      },
+      {
+        main: "Le doute est humain, mais il ne définit pas ta vraie valeur. 🌟",
+        support: "Essaie ça : écris 3 choses dont tu es fier(e) aujourd'hui. Ça réinitialise ton perspective."
+      },
+      {
+        main: "Tu as plus de force en toi que tu ne le crois — je te le promets. 🌟",
+        support: "Un thérapeute ou un coach peut t'aider à reconnaître et renforcer la confiance qui existe déjà en toi."
+      }
+    ]
+  },
+  RELATION: {
+    keywords: ['amour','copain','copine','amoureux','amoureuse','relation','couple','rupture','séparation','trahison','conflit','dispute','jaloux','jalouse','abandon','ex','petit ami','petite amie'],
+    responses: [
+      {
+        main: "Les relations sont complexes et chargées d'émotions — ce que tu ressens est totalement valide. 💜",
+        support: "Que ce soit une amitié, une relation amoureuse ou familiale, les connexions authentiques nécessitent de la communication honnête."
+      },
+      {
+        main: "Les conflits relationnels peuvent être très douloureuse. Rappelle-toi que tu mérites du respect et de la bienveillance. 💜",
+        support: "Si tu te sens maltraité(e), s'éloigner ou demander de l'aide n'est pas lâche — c'est une nécessité."
+      },
+      {
+        main: "L'amour et les connexions humaines sont les plus belles et les plus complexes choses. 💜",
+        support: "Sois honnête avec toi-même sur ce que tu veux et ce dont tu as VRAIMENT besoin dans tes relations."
+      }
+    ]
+  },
+  SANTÉ: {
+    keywords: ['maladie','malade','mal','douleur','fatigue','fatigué','sommeil','dormir','santé','symptômes','médecin','hospitalisation','maladie mentale','dépression','trouble'],
+    responses: [
+      {
+        main: "Les défis de santé peuvent être très difficiles à porter. Je suis là pour t'écouter. 💚",
+        support: "Si c'est une question médicale, consulte un professionnel de santé. Pour le bien-être émotionnel, je peux vraiment t'accompagner."
+      },
+      {
+        main: "Prendre soin de ta santé est un acte d'amour envers toi-même. 💚",
+        support: "Somme, nourriture, mouvement, connexions — ce sont tous les piliers du bien-être holistique."
+      }
+    ]
+  },
+  GRATITUDE: {
+    keywords: ['merci','reconnaissance','reconnaissant','grateful','reconnaître','chanceux','privilégié','bénédiction','favori','bonne journée','ça va mieux','suis guéri','heureux'],
+    responses: [
+      {
+        main: "Ta gratitude me touche vraiment. C'est une façon belle de voir la vie. 🙏✨",
+        support: "Cultive cette reconnaissance — elle est un antidote puissant contre la négativité."
+      },
+      {
+        main: "C'est magnifique de t'entendre exprimer de la reconnaissance ! Continue à voir le bien. 🙏",
+        support: "Partage cette gratitude avec les gens autour de toi — ça crée des ondes positives vraiment puissantes."
+      }
+    ]
+  },
+  NEUTRE: {
+    responses: [
+      {
+        main: "Je t'écoute vraiment. 🌿",
+        support: "Comment puis-je t'accompagner aujourd'hui ? Je suis ici pour toi."
+      },
+      {
+        main: "Merci de me partager ça. 🌿",
+        support: "Dis-moi en plus — je suis vraiment intéressé(e) à comprendre ce que tu ressens."
+      },
+      {
+        main: "Je suis là pour toi, sans jugement. 🌿",
+        support: "Qu'est-ce qui t'amène ici aujourd'hui ? Comment puis-je t'aider ?"
+      },
+      {
+        main: "Parler c'est déjà un grand pas. 🌿",
+        support: "Je suis tout ouïe — partage ce qui te pèse en ce moment."
+      }
+    ]
+  }
+};
+
+const EMOJIS = {
+  JOIE:'😊', TRISTESSE:'😢', STRESS:'😰', PEUR:'😨',
+  COLERE:'😤', MOTIVATION:'🔥', SOLITUDE:'🌧', URGENCE:'🆘', 
+  NEUTRE:'🌿', CONFIANCE:'⭐', RELATION:'💜', SANTÉ:'💚', GRATITUDE:'🙏'
+};
+
+/* detection des emotions */
+function normalize(str) {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function detectEmotion(text) {
+  const t = normalize(text);
+  
+  // urgence doit être détectée en PREMIER
+  if (KB.URGENCE.keywords.some(kw => t.includes(normalize(kw)))) return 'URGENCE';
+  
+  for (const [emotion, data] of Object.entries(KB)) {
+    if (!data.keywords) continue;
+    if (emotion === 'URGENCE') continue; // Déjà checké
+    if (data.keywords.some(kw => t.includes(normalize(kw)))) return emotion;
+  }
+  return 'NEUTRE';
+}
+
+function getResponse(userText) {
+  const emotion = detectEmotion(userText);
+  lastEmotion = emotion;
+  messageCount++;
+  
+  const pool = KB[emotion].responses;
+  const response = pool[Math.floor(Math.random() * pool.length)];
+  
+  return {
+    emotion: `${emotion} ${EMOJIS[emotion]}`,
+    body: response.main,
+    support: response.support || null
+  };
+}
+
+/* interface améliorée */
+function getTime() {
+  return new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function appendMessage(role, text, emotion, supportText) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  let html = '';
+
+  if (role === 'bot' && emotion) {
+    const key = emotion.split(' ')[0];
+    html += `<div class="emotion-label emotion-${key}">${emotion}</div>`;
+  }
+
+  if (role === 'bot' && emotion && emotion.startsWith('URGENCE')) {
+    html += `<div class="crisis-banner"><strong>🆘 Aide immédiate disponible</strong>`;
+    const lines = text.split('\n').filter(l => l.trim());
+    lines.forEach((l, idx) => {
+      if (idx === 0) return; // Skip first line (déjà en strong)
+      html += `<p>${l.replace(/(SAMU|Police|\d{4}|\d{3})/g, '<span class="crisis-phone">$1</span>')}</p>`;
+    });
+    if (supportText) {
+      html += `<p style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px;">`;
+      html += supportText.replace(/(SAMU|Police|\d{4}|\d{3}|3114)/g, '<span class="crisis-phone">$1</span>');
+      html += `</p>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
+    if (role === 'bot' && supportText) {
+      html += `<div class="support-box">${supportText.replace(/\n/g, '<br>')}</div>`;
+    }
+  }
+
+  html += `<span class="timestamp">${getTime()}</span>`;
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message bot'; 
+  div.id = 'typing';
+  div.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function setLoading(on) {
+  isSending = on;
+  document.getElementById('sendBtn').disabled = on;
+  document.getElementById('userInput').disabled = on;
+}
+
+/*  envoi amélioré avec délai humain */
+async function sendMessage() {
+  if (isSending) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  appendMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('quickReplies').style.display = 'none';
+  conversationHistory.push({role: 'user', message: text, emotion: detectEmotion(text)});
+
+  showTyping();
+  setLoading(true);
+
+  // délai naturel avec variation (simule la lecture et réflexion)
+  const readTime = Math.min(text.length * 40, 2000); // temps de lecture
+  const thinkTime = 800 + Math.random() * 600; // temps de réflexion
+  const totalDelay = Math.min(readTime + thinkTime, 3500);
+  
+  await new Promise(r => setTimeout(r, totalDelay));
+
+  const result = getResponse(text);
+  conversationHistory.push({role: 'bot', message: result.body, emotion: lastEmotion, support: result.support});
+  
+  removeTyping();
+  appendMessage('bot', result.body, result.emotion, result.support);
+  setLoading(false);
+}
+
+function sendQuick(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function clearChat() {
+  conversationHistory = [];
+  messageCount = 0;
+  lastEmotion = 'NEUTRE';
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('quickReplies').style.display = 'flex';
+  init();
+}
+
+function init() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.innerHTML = `
+    <div class="bubble">Bonjour 🌸<br><br>Je suis là pour t'écouter sans jugement.<br><br>Comment tu te sens aujourd'hui ?</div>
+    <span class="timestamp">${getTime()}</span>
+  `;
+  msgs.appendChild(div);
+}
+
+init();
+</script>
+</body>
+</html>
